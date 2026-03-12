@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "prod"
+    },
+    "clientName": {
+      "value": "client1"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "subscriptionId": {
+      "value": ""
+    },
+    "tags": {
+      "value": {
+        "Environment": "prod",
+        "Client": "client1",
+        "ManagedBy": "IaC",
+        "Purpose": "Production",
+        "Criticality": "High"
+      }
+    }
+  },
+  "metadata": {
+    "description": "Parameters for Production environment deployment. Use higher SKU tiers and production-grade settings. Update clientName for each new production client."
+  }
+}
