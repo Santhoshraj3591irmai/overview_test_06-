@@ -1,0 +1,34 @@
+$  cat uat.json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "uat"
+    },
+    "clientName": {
+      "value": "client1"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "clusterName": {
+      "value": "rg-irmai-uat-us-1"
+    },
+    "subscriptionId": {
+      "value": "36448a90-905c-4f48-b1b3-deb171f7c247"
+    },
+    "tags": {
+      "value": {
+        "Environment": "uat",
+        "Client": "client1",
+        "ManagedBy": "IaC",
+        "Purpose": "User Acceptance Testing"
+      }
+    }
+  },
+  "metadata": {
+    "description": "Parameters for UAT environment deployment. This matches the existing RG-IRMAI-UAT-US-1 resource group configuration."
+  }
+}
+

@@ -1,0 +1,132 @@
+$  cat kubernetes-resources.bicep
+// kubernetes-resources.bicep
+param environment string
+param rbacData array
+param ingressData array
+param serviceData array
+param serviceAccountData array
+
+// 1. Roles
+resource k8sRoles 'rbac.authorization.k8s.io/Role@v1' = [for rbac in rbacData: {
+  metadata: { name: rbac.roleName, namespace: rbac.ns }
+  rules: rbac.rules
+}]
+
+// 2. RoleBindings
+resource k8sRoleBindings 'rbac.authorization.k8s.io/RoleBinding@v1' = [for rbac in rbacData: {
+  metadata: { name: '${rbac.roleName}-binding', namespace: rbac.ns }
+  subjects: [{ kind: 'ServiceAccount', name: rbac.saName, namespace: rbac.ns }]
+  roleRef: { kind: 'Role', name: rbac.roleName, apiGroup: 'rbac.authorization.k8s.io' }
+  dependsOn: [ k8sRoles ]
+}]
+
+// 3. Ingresses
+resource k8sIngresses 'networking.k8s.io/Ingress@v1' = [for ing in ingressData: {
+  metadata: { name: ing.name, namespace: ing.ns }
+  spec: {
+    ingressClassName: 'nginx'
+    rules: [{
+      http: {
+        paths: [{
+          path: '/'
+          pathType: 'Prefix'
+          backend: { service: { name: 'backend-service', port: { number: 80 } } }
+        }]
+      }
+    }]
+  }
+}]
+
+// 4. Services (The loop for your 21 services)
+resource k8sAppServices 'core/v1/Service@v1' = [for svc in serviceData: {
+  metadata: { name: svc.name, namespace: svc.ns }
+  spec: {
+    type: 'ClusterIP'
+    ports: [{ port: 80, targetPort: 80, protocol: 'TCP' }]
+    selector: { app: svc.name }
+  }
+}]
+
+// 5. Service Accounts (The loop for your 26 SAs)
+resource k8sServiceAccounts 'core/v1/ServiceAccount@v1' = [for sa in serviceAccountData: {
+  metadata: {
+    name: sa.name
+    namespace: sa.ns
+    labels: { managedBy: 'bicep', environment: environment }
+  }
+}]
+
+// 6. Persistent Volume Claims (PVCs)
+param pvcData array = [] // Default to empty if not provided
+
+resource k8sPvcs 'core/v1/PersistentVolumeClaim@v1' = [for pvc in pvcData: {
+  metadata: {
+    name: pvc.name
+    namespace: pvc.ns
+  }
+  spec: {
+    accessModes: [
+      pvc.accessMode // e.g., 'ReadWriteOnce' or 'ReadWriteMany'
+    ]
+    resources: {
+      requests: {
+        storage: pvc.size // e.g., '10Gi'
+      }
+    }
+    // Optional: storageClassName: 'managed-csi'
+  }
+}]
+
+// 7. Secrets
+param secretData array = [] // Default to empty if not provided
+
+resource k8sSecrets 'core/v1/Secret@v1' = [for secret in secretData: {
+  metadata: {
+    name: secret.name
+    namespace: secret.ns
+  }
+  type: 'Opaque' // Standard type for app secrets
+  data: secret.?value ?? {} // Uses a placeholder if no value is provided
+}]
+
+
+// 8. ConfigMaps
+param configMapData array = [] // Default to empty if not provided
+
+resource k8sConfigMaps 'core/v1/ConfigMap@v1' = [for cm in configMapData: {
+  metadata: {
+    name: cm.name
+    namespace: cm.ns
+  }
+  // Optional: Add default data or placeholder to prevent deployment failure
+  data: cm.?data ?? { 'config.placeholder': 'true' }
+}]
+
+
+// 9. Deployments
+param deploymentData array = []
+
+resource k8sDeployments 'apps/v1/Deployment@v1' = [for deploy in deploymentData: {
+  metadata: {
+    name: deploy.name
+    namespace: deploy.ns
+    labels: { app: deploy.name }
+  }
+  spec: {
+    replicas: deploy.?replicas ?? 1
+    selector: { matchLabels: { app: deploy.name } }
+    template: {
+      metadata: { labels: { app: deploy.name } }
+      spec: {
+        serviceAccountName: deploy.?saName ?? 'default'
+        containers: [
+          {
+            name: deploy.name
+            image: deploy.?image ?? 'mcr.microsoft.com/oss/nginx/nginx:1.15.5-alpine' // Placeholder image
+            ports: [{ containerPort: deploy.?port ?? 80 }]
+          }
+        ]
+      }
+    }
+  }
+}]

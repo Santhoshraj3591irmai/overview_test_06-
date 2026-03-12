@@ -1,0 +1,34 @@
+ cat prod.json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "prod"
+    },
+    "clientName": {
+      "value": "client1"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "clusterName": {
+      "value": "rg-irmai-prod-us-1"
+    },
+    "subscriptionId": {
+      "value": "36448a90-905c-4f48-b1b3-deb171f7c247"
+    },
+    "tags": {
+      "value": {
+        "Environment": "prod",
+        "Client": "client1",
+        "ManagedBy": "IaC",
+        "Purpose": "Production",
+        "Criticality": "High"
+      }
+    }
+  },
+  "metadata": {
+    "description": "Parameters for Production environment deployment. Use higher SKU tiers and production-grade settings. Update clientName for each new production client."
+  }
+}
